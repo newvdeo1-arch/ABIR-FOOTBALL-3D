@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#071b13">
+<title>ABIR FOOTBALL 3D</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06150f;color:white;font-family:system-ui,Arial;touch-action:none}
+#top{position:absolute;z-index:3;top:0;left:0;right:0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(#06150feF,#06150f66)}
+.brand{font-weight:950;letter-spacing:1.4px;color:#83ffad;font-size:19px}.sub{font-size:9px;color:#c1ddca}
+#score{font-weight:900;background:#07170fbb;border:1px solid #568c68;border-radius:12px;padding:7px 13px}
+#view{position:absolute;inset:0;width:100%;height:100%;display:block}
+#bottom{position:absolute;z-index:3;bottom:0;left:0;right:0;height:154px;display:flex;justify-content:space-between;align-items:center;padding:12px 22px;background:linear-gradient(transparent,#06150f 20%,#06150f)}
+#pad{width:120px;height:120px;border-radius:50%;background:#183d2acc;border:2px solid #79b78a;position:relative;touch-action:none}
+#knob{position:absolute;width:46px;height:46px;border-radius:50%;background:#9dffb5;border:2px solid white;left:35px;top:35px}
+.actions{display:flex;gap:12px;align-items:center}button{border:0;border-radius:50%;width:68px;height:68px;font-weight:900;color:#092014;background:#9dffb5;box-shadow:0 4px 0 #398454;font-size:13px}#pass{width:55px;height:55px;background:#d7f5ff;box-shadow:0 4px 0 #6798a6}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #398454}
+#hint{position:absolute;z-index:3;bottom:155px;width:100%;text-align:center;font-size:10px;color:#d1ead9;text-shadow:0 1px 4px #000}
+#overlay{position:absolute;z-index:5;inset:0;display:flex;align-items:center;justify-content:center;background:#00140dcc;padding:22px}
+.panel{width:min(420px,100%);padding:24px;border:1px solid #39724e;border-radius:22px;background:linear-gradient(145deg,#123d27,#071a11);text-align:center;box-shadow:0 20px 60px #0009}
+.panel h1{margin:0;color:#7dffa4;font-size:29px;letter-spacing:2px}.panel p{color:#d0e9d8;line-height:1.5}.start{border-radius:14px;width:100%;height:52px;font-size:16px;margin-top:8px}
+.small{font-size:10px;color:#a8cbb4}
+</style>
+</head>
+<body>
+<div id="top"><div><div class="brand">ABIR FOOTBALL</div><div class="sub">3D MOBILE FOOTBALL • PROTOTYPE</div></div><div id="score">0 - 0</div></div>
+<canvas id="view"></canvas>
+<div id="hint">জয়স্টিক দিয়ে খেলোয়াড় চালাও • SHOOT দিয়ে শট নাও</div>
+<div id="bottom"><div id="pad"><div id="knob"></div></div><div class="actions"><button id="pass">PASS</button><button id="shoot">SHOOT</button></div></div>
+<div id="overlay"><div class="panel"><h1>ABIR FOOTBALL 3D</h1><p>এটি তোমার গেমের প্রথম 3D প্রোটোটাইপ।<br>মাঠে খেলোয়াড় চালাও এবং গোল করো!</p><button class="start" id="start">3D খেলা শুরু</button><div class="small">3D মডেল ও কন্ট্রোলের প্রাথমিক সংস্করণ — ফটো-রিয়েলিস্টিক নয়।</div></div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const canvas=document.querySelector('#view');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8bb8d0);scene.fog=new THREE.Fog(0x8bb8d0,34,85);
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,120);
+camera.position.set(0,12,19);camera.lookAt(0,0,0);
+scene.add(new THREE.HemisphereLight(0xe7f6ff,0x315b37,2.0));
+const sun=new THREE.DirectionalLight(0xffffff,2.3);sun.position.set(-8,18,9);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const mat=(color,roughness=.8)=>new THREE.MeshStandardMaterial({color,roughness});
+const grass=mat(0x197a3d),lineMat=mat(0xeaffef),white=mat(0xffffff),skin=mat(0xd59b73),blue=mat(0x1455db),red=mat(0xd92f3d),black=mat(0x172019);
+const field=new THREE.Mesh(new THREE.PlaneGeometry(24,38),grass);field.rotation.x=-Math.PI/2;field.receiveShadow=true;scene.add(field);
+for(let i=0;i<10;i++){let stripe=new THREE.Mesh(new THREE.PlaneGeometry(24,3.8),mat(i%2?0x197a3d:0x218648));stripe.rotation.x=-Math.PI/2;stripe.position.set(0,.008,-17.1+i*3.8);scene.add(stripe)}
+function line(x,z,w,h){let o=new THREE.Mesh(new THREE.BoxGeometry(w,.025,h),lineMat);o.position.set(x,.025,z);scene.add(o)}
+line(0,-19,24,.12);line(0,19,24,.12);line(-12,0,.12,38);line(12,0,.12,38);line(0,0,24,.10);
+const circle=new THREE.Mesh(new THREE.TorusGeometry(3.2,.045,8,64),lineMat);circle.rotation.x=Math.PI/2;circle.position.y=.04;scene.add(circle);
+function box(x,z,w,h,d,material,y=.04){let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.receiveShadow=true;m.castShadow=true;scene.add(m);return m}
+for(let z of [-18.7,18.7]){box(0,z,7,.1,.15,white,.05);box(-3.5,z+(z<0?.8:-.8),.12,.1,1.6,white,.05);box(3.5,z+(z<0?.8:-.8),.12,.1,1.6,white,.05)}
+// goal at far end
+for(let z of [-19.2]){box(-3.3,z, .12,2.1,.12,white,1.05);box(3.3,z,.12,2.1,.12,white,1.05);box(0,z,6.7,.12,.12,white,2.1)}
+// stadium stands and crowd-like seating blocks
+for(let side of [-1,1]){let stand=new THREE.Mesh(new THREE.BoxGeometry(5,3,42),mat(0x344b55));stand.position.set(side*15,1.1,0);scene.add(stand);for(let row=0;row<4;row++){let seat=new THREE.Mesh(new THREE.BoxGeometry(.8,.35,41),mat([0x254b82,0xb83b43,0xe0d5bd,0x27734a][row]));seat.position.set(side*(13.1+row*.95),2.0+row*.36,0);scene.add(seat)}}
+function makePlayer(color,x,z){let g=new THREE.Group();const shirt=mat(color),shorts=mat(0x101b25),sock=mat(0xe9ecef);
+function part(geo,material,pos){let m=new THREE.Mesh(geo,material);m.position.set(...pos);m.castShadow=true;g.add(m);return m}
+part(new THREE.CapsuleGeometry(.34,.52,4,8),shirt,[0,1.28,0]);
+part(new THREE.SphereGeometry(.25,16,12),skin,[0,1.95,0]);
+part(new THREE.SphereGeometry(.255,16,10),mat(0x29201c),[0,2.08,-.025]).scale.set(1,.55,1);
+part(new THREE.BoxGeometry(.53,.28,.38),shorts,[0,.87,0]);
+for(let s of [-1,1]){part(new THREE.CapsuleGeometry(.105,.64,4,8),skin,[s*.43,1.35,0]).rotation.z=s*.22;part(new THREE.CapsuleGeometry(.12,.5,4,8),shorts,[s*.15,.48,0]);part(new THREE.BoxGeometry(.23,.12,.42),sock,[s*.15,.12,-.08])}
+g.position.set(x,0,z);scene.add(g);return g}
+const hero=makePlayer(0x1455db,0,9),enemy=makePlayer(0xd92f3d,0,-8);enemy.rotation.y=Math.PI;
+const ball=new THREE.Mesh(new THREE.SphereGeometry(.22,24,16),white);ball.position.set(0,.23,6.7);ball.castShadow=true;scene.add(ball);
+const blackPatch=new THREE.Mesh(new THREE.IcosahedronGeometry(.225,1),black);blackPatch.scale.set(.4,.2,.4);ball.add(blackPatch);
+const shadow=new THREE.Mesh(new THREE.CircleGeometry(.34,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.25}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.015;scene.add(shadow);
+let velocity=new THREE.Vector3(),joy={x:0,y:0},started=false,score=0,last=performance.now();
+function reset(){hero.position.set(0,0,9);ball.position.set(0,.23,6.7);velocity.set(0,0,0)}
+function update(dt){if(!started)return;
+let move=new THREE.Vector3(joy.x,0,joy.y);if(move.length()>1)move.normalize();hero.position.x+=move.x*6*dt;hero.position.z+=move.z*6*dt;hero.position.x=THREE.MathUtils.clamp(hero.position.x,-11,11);hero.position.z=THREE.MathUtils.clamp(hero.position.z,-17,17);
+if(move.lengthSq()>.01)hero.rotation.y=Math.atan2(move.x,move.z);
+let dx=ball.position.x-hero.position.x,dz=ball.position.z-hero.position.z,dist=Math.hypot(dx,dz);
+if(dist<1.05){let n=new THREE.Vector3(dx,0,dz).normalize();velocity.addScaledVector(n,1.4)}
+// opponent tracks the ball gently
+enemy.position.x=THREE.MathUtils.damp(enemy.position.x,ball.position.x,.35,dt);
+enemy.position.z=THREE.MathUtils.damp(enemy.position.z,Math.max(-11,ball.position.z-2),.3,dt);
+ball.position.addScaledVector(velocity,dt);velocity.multiplyScalar(Math.pow(.985,dt*60));
+if(ball.position.x<-11||ball.position.x>11)velocity.x*=-.7;
+if(ball.position.z>18){ball.position.z=18;velocity.z*=-.6}
+if(ball.position.z< -19.1 && Math.abs(ball.position.x)<3.25){score++;document.querySelector('#score').textContent=score+' - 0';reset()}
+else if(ball.position.z< -18.7){ball.position.z=-18.7;velocity.z*=-.65}
+ball.position.y=.23+Math.abs(Math.sin(performance.now()*.009))*Math.min(.18,velocity.length()*.025);
+shadow.position.set(ball.position.x,.02,ball.position.z);
+camera.position.x=THREE.MathUtils.damp(camera.position.x,hero.position.x*.22,.8,dt);camera.position.z=THREE.MathUtils.damp(camera.position.z,hero.position.z+10,.6,dt);camera.lookAt(hero.position.x*.18,0,hero.position.z-2);
+}
+function render(now){let dt=Math.min((now-last)/1000,.04);last=now;update(dt);renderer.render(scene,camera);requestAnimationFrame(render)}requestAnimationFrame(render);
+const pad=document.querySelector('#pad'),knob=document.querySelector('#knob');
+function padMove(e){let r=pad.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),l=Math.hypot(dx,dy)||1,lim=34;if(l>lim){dx=dx/l*lim;dy=dy/l*lim}joy.x=dx/lim;joy.y=dy/lim;knob.style.left=(35+dx)+'px';knob.style.top=(35+dy)+'px'}
+function padReset(){joy.x=joy.y=0;knob.style.left='35px';knob.style.top='35px'}
+pad.addEventListener('pointerdown',e=>{pad.setPointerCapture(e.pointerId);padMove(e)});pad.addEventListener('pointermove',e=>{if(e.buttons)padMove(e)});pad.addEventListener('pointerup',padReset);pad.addEventListener('pointercancel',padReset);
+function kick(power){if(!started)return;let d=hero.position.distanceTo(ball.position);if(d<3.4){let dir=new THREE.Vector3(ball.position.x-hero.position.x,0,ball.position.z-hero.position.z);if(dir.length()<.1)dir.set(0,0,-1);dir.normalize();dir.z-=.65;dir.normalize();velocity.addScaledVector(dir,power)}else{velocity.set(0,0,-power*.55)}}
+document.querySelector('#shoot').onclick=()=>kick(17);document.querySelector('#pass').onclick=()=>kick(8);
+document.querySelector('#start').onclick=()=>{started=true;document.querySelector('#overlay').style.display='none'};
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7))});
+</script>
+</body></html>
